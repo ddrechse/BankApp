@@ -41,22 +41,103 @@ A big *thank you* 🙏 to our [sponsors](#sponsors) and [backers](#backers) who 
 
 ---
 # BankApp API
-  Deposit
+  * ## Deposit
   ```bash
-$ curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"accountNum":5000, "action":"Deposit","amount":500}' http://localhost:1337/parse/classes/BankAccount
+$ curl -X POST \
+ -H "X-Parse-Application-Id: APPLICATION_ID" \
+ -H "Content-Type: application/json" \
+ -d '{"accountNum":5000, "action":"Deposit","amount":500}' \
+ http://localhost:1337/parse/classes/BankAccount
 ```
-Withdrawal
-```bash
-$ curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"accountNum":5000, "action":"Withdrawal","amount":500}' http://localhost:1337/parse/classes/BankAccount
-```
-Balance
-```bash
-curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID"  -H "Content-Type: application/json" -d '{ "accountNum": 5000 }' http://localhost:1337/parse/functions/balance
+You should get a response similar to this:
+
+```js
+{
+  "objectId":"s95om32eAU",
+  "createdAt":"2022-06-08T19:16:57.654Z"
+}
 ```
 
-TransactionHistory
+* ## Withdrawal
 ```bash
-curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID"  -H "Content-Type: application/json" -d '{ "accountNum": 5000 }' http://localhost:1337/parse/functions/getTransactionHistory
+$ curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID" \
+-H "Content-Type: application/json" \
+-d '{"accountNum":5000, "action":"Withdrawal","amount":500}' \
+http://localhost:1337/parse/classes/BankAccount
+```
+You should get a response similar to this:
+
+```js
+{
+  "objectId":"s95om32eAU",
+  "createdAt":"2022-06-08T19:16:57.654Z"
+}
+```
+
+* ## Balance
+```bash
+curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID"  \
+-H "Content-Type: application/json" \
+-d '{ "accountNum": 5000 }' \
+http://localhost:1337/parse/functions/balance
+```
+You should get a response similar to this:
+
+```js
+{
+"result":1000
+}
+```
+
+* ## TransactionHistory
+```bash
+curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID"  \
+-H "Content-Type: application/json" \
+-d '{ "accountNum": 5000 }' \
+http://localhost:1337/parse/functions/getTransactionHistory
+```
+
+You should get a response similar to this:
+
+```js
+{
+  "result": [
+    {
+      "accountNum": 5000,
+      "action": "Withdrawal",
+      "amount": -500,
+      "createdAt": "2022-06-08T19:04:26.641Z",
+      "updatedAt": "2022-06-08T19:04:26.641Z",
+      "objectId": "3SRyofjuXc",
+      "__type": "Object",
+      "className": "BankAccount"
+    },
+    {
+      "accountNum": 5000,
+      "action": "Deposit",
+      "amount": 500,
+      "createdAt": "2022-06-08T19:03:36.441Z",
+      "updatedAt": "2022-06-08T19:03:36.441Z",
+      "objectId": "DAHvaxo3tK",
+      "__type": "Object",
+      "className": "BankAccount"
+    },
+    {
+      "accountNum": 5000,
+      "action": "Deposit",
+      "amount": 500,
+      "createdAt": "2022-06-08T19:04:04.844Z",
+      "updatedAt": "2022-06-08T19:04:04.844Z",
+      "objectId": "mIayiDZ3oG",
+      "__type": "Object",
+      "className": "BankAccount"
+    }
+  ]
+}
+
 ```
 
 ---
