@@ -40,7 +40,26 @@ A big *thank you* 🙏 to our [sponsors](#sponsors) and [backers](#backers) who 
 [![Bronze Sponsors](https://opencollective.com/parse-server/tiers/bronze-sponsor.svg?avatarHeight=36&button=false)](https://opencollective.com/parse-server/contribute/bronze-sponsor-10559)
 
 ---
+# BankApp API
+  Deposit
+  ```bash
+$ curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"accountNum":5000, "action":"Deposit","amount":500}' http://localhost:1337/parse/classes/BankAccount
+```
+Withdrawal
+```bash
+$ curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID" -H "Content-Type: application/json" -d '{"accountNum":5000, "action":"Withdrawal","amount":500}' http://localhost:1337/parse/classes/BankAccount
+```
+Balance
+```bash
+curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID"  -H "Content-Type: application/json" -d '{ "accountNum": 5000 }' http://localhost:1337/parse/functions/balance
+```
 
+TransactionHistory
+```bash
+curl -X POST -H "X-Parse-Application-Id: APPLICATION_ID"  -H "Content-Type: application/json" -d '{ "accountNum": 5000 }' http://localhost:1337/parse/functions/getTransactionHistory
+```
+
+---
 - [Getting Started](#getting-started)
   - [Running Parse Server](#running-parse-server)
     - [Compatibility](#compatibility)

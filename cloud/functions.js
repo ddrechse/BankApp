@@ -25,7 +25,6 @@
   });
 
   Parse.Cloud.beforeSave("Review", (request) => {
-    console.log("CDD In Review Before Save");
     console.log(request);
     },{
       fields: {
