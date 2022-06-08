@@ -1,12 +1,17 @@
-Parse.Cloud.beforeSave("BankAccount", request => {
-    console.log("CDD In BankAccount  Before Save ");
+Parse.Cloud.beforeSave("BankAccount", async request => {
     const action = request.object.get("action");
     const amount = request.object.get("amount");
+    const accountNum = request.object.get("accountNum");
+    const params =  { "accountNum": accountNum };
+    const balance = await Parse.Cloud.run("balance",params);
+    // Verify current balance > withdrawal amount
+    if ( amount > balance ) {
+        throw "Withdrawal Amount is greater than current balance of " + balance;
+    }
     // Make Withdrawals negative, Balance is just summed
     if (action === "Withdrawal") {
       request.object.set("amount", amount * -1)
     }
-    console.log(request.object.get("amount"));
     },{
       fields: {
         accountNum : {
