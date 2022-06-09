@@ -5,7 +5,7 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     const params =  { "accountNum": accountNum };
     const balance = await Parse.Cloud.run("balance",params);
     // Verify current balance > withdrawal amount
-    if ( amount > balance ) {
+    if (action === "Withdrawal" && amount > balance ) {
         throw "Withdrawal Amount is greater than current balance of " + balance;
     }
     // Make Withdrawals negative, Balance is just summed
