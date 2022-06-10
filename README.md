@@ -74,6 +74,31 @@ You should get a response similar to this:
   "createdAt":"2022-06-08T19:16:57.654Z"
 }
 ```
+* ## Transfer
+
+  ```bash
+$ curl -X POST \
+ -H "X-Parse-Application-Id: APPLICATION_ID" \
+ -H "Content-Type: application/json" \
+ -d '{"accountNum":5001, "action":"Transfer", "toAccountNum": 1234, "amount":500}' \
+ http://localhost:1337/parse/classes/BankAccount
+```
+You should get a response similar to this:
+
+```js
+{
+  "accountNum":5001,
+  "action":"Transfer",
+  "toAccountNum":1234,
+  "createdAt":"2022-06-10T14:34:11.185Z",
+  "amount":-500,
+  "updatedAt":"2022-06-10T14:34:11.185Z",
+  "objectId":"bKL9zA18GB",
+  "__type":"Object",
+  "className":"BankAccount"
+}
+```
+
 
 * ## Balance
 ```bash
@@ -97,7 +122,7 @@ curl -X POST \
 -H "X-Parse-Application-Id: APPLICATION_ID"  \
 -H "Content-Type: application/json" \
 -d '{ "accountNum": 5000 }' \
-http://localhost:1337/parse/functions/getTransactionHistory
+http://localhost:1337/parse/functions/history
 ```
 
 You should get a response similar to this:
