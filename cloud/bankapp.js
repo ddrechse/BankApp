@@ -4,23 +4,53 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     const action = request.object.get("action");
     const amount = request.object.get("amount");
     const accountNum = request.object.get("accountNum");
-    const params =  { "accountNum": accountNum };
-    const balance = await Parse.Cloud.run("balance",params);
+    const toAccountNum = request.object.get("toAccountNum")
+    const externalAccountNum = request.object.get("externalAccountNum")
+    const fromAccountNum = request.object.get("fromAccountNum")
+    const balance = await Parse.Cloud.run("balance",{ "accountNum": accountNum });
+
     // Verify current balance > withdrawal amount
     if (action === "Withdrawal" && amount > balance ) {
         throw "Withdrawal Amount is greater than current balance of " + balance;
     }
+
+    // Verify toAccountNum or externalAccountNum exists when action = Transfer
+    if(action === "Transfer" && (typeof toAccountNum === 'undefined' && typeof externalAccountNum === 'undefined' && typeof fromAccountNum === 'undefined'))  {
+        throw "Missing toAccountNum(internal), externalAccountNum(External) or fromAccountNum(internal) for Transfer Action";
+    }
+    if(action === "Transfer" && (typeof toAccountNum !== 'undefined' && typeof externalAccountNum !== 'undefined'))  {
+        throw "Both toAccountNum(internal) and externalAccountNum(External) for Transfer is invalid.   Pick one or the other";
+    }
+
+    // Verify local transfer account exists
+    if(typeof toAccountNum !== 'undefined') {
+        const accountExists = await Parse.Cloud.run("accountexists", { "accountNum": toAccountNum });
+        if(action === "Transfer" && !accountExists){
+            throw ("Transfer toAccountNum does not exist, toAccountNum = %s", toAccountNum);
+        }
+            
+        // Verify current balance > transfer amount
+        if (action === "Transfer" && amount > balance ) {
+            throw "Transfer Amount is greater than current balance of " + balance;
+        }
+    }
+
+    // Verify current balance > transfer amount
     if (action === "Transfer" && amount > balance ) {
         throw "Transfer Amount is greater than current balance of " + balance;
     }
     // Make Withdrawals negative, Balance is just summed
-    if (action === "Withdrawal" || action === "Transfer") {
+    if (action === "Withdrawal" || action === "Transfer" && typeof fromAccountNum === 'undefined') {
       request.object.set("amount", amount * -1)
     }
     },{
       fields: {
         accountNum : {
           required:true,
+          options: accountNum => {
+            return accountNum > 0;
+          },
+          error: 'accountNum must be greater than 0'          
         },
         action : {
           required:true,
@@ -35,11 +65,25 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
             return amount > 0;
           },
           error: 'amount must be greater than 0'
-        }
+        },
+        toAccountNum : {
+            required:false,
+            options: toAccountNum => {
+              return toAccountNum > 0;
+            },
+            error: 'toAccountNum must be greater than 0'          
+        },     
+        externalAccountNum : {
+            required:false,
+            options: externalAccountNum => {
+              return externalAccountNum > 0;
+            },
+            error: 'externalAccountNum must be greater than 0'          
+        }            
       }
     });
 
-    Parse.Cloud.define('balance', async (request) => {
+Parse.Cloud.define('balance', async (request) => {
       const query = new Parse.Query("BankAccount");
       query.equalTo("accountNum", request.params.accountNum);
       const results = await query.find({ useMasterKey: true });
@@ -50,7 +94,15 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
       return sum;
     });
 
-    Parse.Cloud.define('history', async req => {
+Parse.Cloud.define('accountexists', async (request) => {
+        const query = new Parse.Query("BankAccount");
+        query.equalTo("accountNum", request.params.accountNum);
+        const results = await query.find({ useMasterKey: true });
+        var count = Object. keys(results).length
+        return count > 0;
+      });
+
+Parse.Cloud.define('history', async req => {
         req.log.info(req);
         const query = new Parse.Query("BankAccount");
         query.equalTo("accountNum", req.params.accountNum);
@@ -58,13 +110,42 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
         return result
       });
 
-      Parse.Cloud.afterSave("BankAccount", async (request) => {
+Parse.Cloud.afterSave("BankAccount", async (request) => {
         const action = request.object.get("action");
-        if (action === "Transfer") {
-            accountNum = request.object.get("toAccountNum");
+        const toAccountNum = request.object.get("toAccountNum")
+        const externalAccountNum = request.object.get("externalAccountNum")
+
+
+        if (action === "Transfer" && typeof externalAccountNum !== 'undefined') {
             amount =  request.object.get("amount");
-            let message_content = "{\"accountNum\":"+accountNum+ ", \"action\":\"Deposit\", \"amount\":"+amount*-1+"}";
+            let message_content = "{\"accountNum\":"+externalAccountNum+ ", \"action\":\"Deposit\", \"amount\":"+amount*-1+"}";
             result = await publish(message_content);
+        }
+
+        if (action === "Transfer" && typeof toAccountNum !== 'undefined') {
+            const BankAccount = Parse.Object.extend("BankAccount");
+            const bankaccount = new BankAccount();
+
+            bankaccount.set("accountNum", toAccountNum);
+            const fromAccountNum = request.object.get("accountNum");
+            bankaccount.set("fromAccountNum", fromAccountNum);
+            bankaccount.set("action", "Transfer");
+            const amount = request.object.get("amount");
+            bankaccount.set("amount", amount*-1);
+            console.log(bankaccount);
+
+            let result;
+            await bankaccount.save()
+            .then((bankaccount) => {
+              // Execute any logic that should take place after the object is saved.
+              result = 'New object created with objectId: ' + bankaccount.id;
+            }, (error) => {
+              // Execute any logic that should take place if the save fails.
+              // error is a Parse.Error with an error code and message.
+              result = 'Failed to process Transfer, with error code: ' + error.message;
+            });
+            
+            return result;
         }
       });
 
@@ -148,4 +229,3 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
             }
         }
       }
-      

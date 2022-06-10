@@ -74,7 +74,9 @@ You should get a response similar to this:
   "createdAt":"2022-06-08T19:16:57.654Z"
 }
 ```
-* ## Transfer
+* ## Internal Transfer
+
+specify toAccountNum for the account to transfer to within the same Bank
 
   ```bash
 $ curl -X POST \
@@ -99,6 +101,67 @@ You should get a response similar to this:
 }
 ```
 
+If you look at the logs, you will see 2 transactions, Deposit and Withdrawal except they are of the Transfer action type
+
+Deposit
+```js
+verbose: RESPONSE from [POST] /parse/classes/BankAccount: {
+  "status": 201,
+  "response": {
+    "accountNum": 1234,
+    "fromAccountNum": 5001,
+    "action": "Transfer",
+    "amount": 500,
+    "createdAt": "2022-06-10T20:39:12.045Z",
+    "updatedAt": "2022-06-10T20:39:12.045Z",
+    "objectId": "ViiJFSZjpk",
+    "__type": "Object",
+    "className": "BankAccount"
+  },
+```
+and Withdrawal
+```js
+verbose: RESPONSE from [POST] /parse/classes/BankAccount: {
+  "status": 201,
+  "response": {
+    "accountNum": 5001,
+    "action": "Transfer",
+    "toAccountNum": 1234,
+    "createdAt": "2022-06-10T20:39:11.902Z",
+    "amount": -500,
+    "updatedAt": "2022-06-10T20:39:11.902Z",
+    "objectId": "aQvENmtSvD",
+    "__type": "Object",
+    "className": "BankAccount"
+  },
+
+```
+* ## External Transfer
+specify externalAccountNum for the account to transfer to an account in a different bank using queueing
+
+  ```bash
+$ curl -X POST \
+ -H "X-Parse-Application-Id: APPLICATION_ID" \
+ -H "Content-Type: application/json" \
+ -d '{"accountNum":5001, "action":"Transfer", "externalAccountNum": 1234, "amount":500}' \
+ http://localhost:1337/parse/classes/BankAccount
+```
+You should get a response similar to this:
+
+```js
+{
+"accountNum":5001,
+"action":"Transfer",
+"externalAccountNum":1234,
+"createdAt":"2022-06-10T20:37:07.565Z",
+"amount":-500,
+"updatedAt":"2022-06-10T20:37:07.565Z",
+"objectId":"XaWodYve32",
+"__type":"Object",
+"className":"BankAccount"
+}
+```
+In the external transfer case, a transfer message has been enqueued
 
 * ## Balance
 ```bash
