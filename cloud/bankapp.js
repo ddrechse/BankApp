@@ -3,6 +3,7 @@ isInitialized = false;
 
 Parse.Cloud.beforeSave("BankAccount", async request => {
 
+    const userid = request.object.get("userId");
     const action = request.object.get("action");
     const amount = request.object.get("amount");
     const accountNum = request.object.get("accountNum");
@@ -10,6 +11,12 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     const externalAccountNum = request.object.get("externalAccountNum")
     const fromAccountNum = request.object.get("fromAccountNum")
     const balance = await Parse.Cloud.run("balance",{ "accountNum": accountNum });
+    const existingUserId = await Parse.Cloud.run("getuserforaccountnum", { "accountNum": accountNum });
+
+    // Verify account number isn't already used for a different user
+    if (existingUserId.length != 0 && userid !== existingUserId) {
+      throw "Account Number error: " + accountNum + " associated with a different user";
+    }
 
     // Verify current balance > withdrawal amount
     if (action === "Withdrawal" && amount > balance ) {
@@ -47,6 +54,13 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     }
     },{
       fields: {
+        userId: {
+          required:true,
+          options: userId => {
+            return isAlphaNumeric(userId);
+          },
+          error: 'userId must be AlphaNumeric'          
+        },
         accountNum : {
           required:true,
           options: accountNum => {
@@ -85,6 +99,20 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
       }
     });
 
+    function isAlphaNumeric(str) {
+      var code, i, len;
+    
+      for (i = 0, len = str.length; i < len; i++) {
+        code = str.charCodeAt(i);
+        if (!(code > 47 && code < 58) && // numeric (0-9)
+            !(code > 64 && code < 91) && // upper alpha (A-Z)
+            !(code > 96 && code < 123)) { // lower alpha (a-z)
+          return false;
+        }
+      }
+      return true;
+    };    
+
 Parse.Cloud.define('balance', async (request) => {
       const query = new Parse.Query("BankAccount");
       query.equalTo("accountNum", request.params.accountNum);
@@ -111,6 +139,37 @@ Parse.Cloud.define('history', async req => {
         const result = await query.find({ useMasterKey: true });
         return result
       });
+
+Parse.Cloud.define('getaccountsforuser', async req => {
+        req.log.info(req);
+        const query = new Parse.Query("BankAccount");
+        query.equalTo("userId", req.params.userId);
+
+        const results = await query.find({ useMasterKey: true });
+        var lookup = {};
+        var accounts = [];
+        if (results.length > 0) {
+          results.forEach(function (result) {
+            var name = result.get("accountNum");
+            if (!(name in lookup)) {
+              lookup[name] = 1;
+              accounts.push(name);
+            }
+          });    
+        }
+       return accounts;
+      });  
+      
+Parse.Cloud.define('getuserforaccountnum', async req => {
+
+      const query = new Parse.Query("BankAccount");
+      query.equalTo("accountNum", req.params.accountNum);
+      const results = await query.first({ useMasterKey: true });
+      if (typeof results !== 'undefined') {
+        return results.get("userId");
+      }
+      return "";
+    });
 
 Parse.Cloud.afterSave("BankAccount", async (request) => {
 
@@ -197,7 +256,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
     
         const user = "user";
         const password = "password";
-        const connectString = "database";
+        const connectString = "db";
         console.log(statement);
 
         let connection;
@@ -226,7 +285,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
     
         const user = "user";
         const password = "password";
-        const connectString = "database";
+        const connectString = "db";
 
           let connection;
           try {
@@ -237,6 +296,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
             });
             const queueName = "publish";
             const queue = await connection.getQueue(queueName);
+            queue.enqOptions.consumerName = "BankA_subscriber";
             await queue.enqOne(message_content);
             await connection.commit();
             return connection
@@ -258,7 +318,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
       
           const user = "user";
           const password = "password";
-          const connectString = "database";
+          const connectString = "db";
 
             let connection;
             try {

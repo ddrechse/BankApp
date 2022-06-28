@@ -46,7 +46,7 @@ A big *thank you* 🙏 to our [sponsors](#sponsors) and [backers](#backers) who 
 $ curl -X POST \
  -H "X-Parse-Application-Id: APPLICATION_ID" \
  -H "Content-Type: application/json" \
- -d '{"accountNum":5000, "action":"Deposit","amount":500}' \
+ -d '{"userId":"user1", "accountNum":5000, "action":"Deposit","amount":500}' \
  http://localhost:1337/parse/classes/BankAccount
 ```
 You should get a response similar to this:
@@ -63,7 +63,7 @@ You should get a response similar to this:
 $ curl -X POST \
 -H "X-Parse-Application-Id: APPLICATION_ID" \
 -H "Content-Type: application/json" \
--d '{"accountNum":5000, "action":"Withdrawal","amount":500}' \
+-d '{"userId":"user1", "accountNum":5000, "action":"Withdrawal","amount":500}' \
 http://localhost:1337/parse/classes/BankAccount
 ```
 You should get a response similar to this:
@@ -82,7 +82,7 @@ specify toAccountNum for the account to transfer to within the same Bank
 $ curl -X POST \
  -H "X-Parse-Application-Id: APPLICATION_ID" \
  -H "Content-Type: application/json" \
- -d '{"accountNum":5001, "action":"Transfer", "toAccountNum": 1234, "amount":500}' \
+ -d '{"userId":"user1", "accountNum":5001, "action":"Transfer", "toAccountNum": 1234, "amount":500}' \
  http://localhost:1337/parse/classes/BankAccount
 ```
 You should get a response similar to this:
@@ -143,7 +143,7 @@ specify externalAccountNum for the account to transfer to an account in a differ
 $ curl -X POST \
  -H "X-Parse-Application-Id: APPLICATION_ID" \
  -H "Content-Type: application/json" \
- -d '{"accountNum":5001, "action":"Transfer", "externalAccountNum": 1234, "amount":500}' \
+ -d '{"userId":"user1", "accountNum":5001, "action":"Transfer", "externalAccountNum": 1234, "amount":500}' \
  http://localhost:1337/parse/classes/BankAccount
 ```
 You should get a response similar to this:
@@ -227,6 +227,46 @@ You should get a response similar to this:
 }
 
 ```
+
+* ## List Account Numbers for User
+
+```bash
+curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID"  \
+-H "Content-Type: application/json" \
+-d '{ "userId": "Reggie" }' \
+http://localhost:1337/parse/functions/getaccountsforuser
+```
+
+The result is an array of account numbers or empty array for no accounts found.
+You should get a response similar to this:
+
+```js
+{
+  "result":[1000,2000]
+}
+```
+
+* ## Get User for Account Number
+
+```bash
+curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID"  \
+-H "Content-Type: application/json" \
+-d '{ "accountNum": 1000 }' \
+http://localhost:1337/parse/functions/getuserforaccountnum
+```
+
+The result is a string or empty string for no user associated with account.
+You should get a response similar to this:
+
+```js
+{
+"result":"Reggie"
+}
+```
+
+
 
 ---
 - [Getting Started](#getting-started)
