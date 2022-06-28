@@ -86,20 +86,22 @@ specify toAccountNum for the account to transfer to within the same Bank
 $ curl -X POST \
  -H "X-Parse-Application-Id: APPLICATION_ID" \
  -H "Content-Type: application/json" \
- -d '{"userId":"user1", "accountNum":5001, "action":"Transfer", "toAccountNum": 1234, "amount":500}' \
+ -d '{"userId":"user1", "accountType":"Checking", "accountNum":5001, "action":"Transfer", "toAccountNum": 1234, "amount":500}' \
  http://localhost:1337/parse/classes/BankAccount
 ```
 You should get a response similar to this:
 
 ```js
 {
-  "accountNum":5001,
+  "userId":"Reggie",
+  "accountNum":2000,
+  "accountType":"Checking",
   "action":"Transfer",
-  "toAccountNum":1234,
-  "createdAt":"2022-06-10T14:34:11.185Z",
+  "toAccountNum":1000,
+  "createdAt":"2022-06-28T17:47:01.743Z",
   "amount":-500,
-  "updatedAt":"2022-06-10T14:34:11.185Z",
-  "objectId":"bKL9zA18GB",
+  "updatedAt":"2022-06-28T17:47:01.743Z",
+  "objectId":"phrJAia1H5",
   "__type":"Object",
   "className":"BankAccount"
 }
@@ -112,13 +114,15 @@ Deposit
 verbose: RESPONSE from [POST] /parse/classes/BankAccount: {
   "status": 201,
   "response": {
-    "accountNum": 1234,
-    "fromAccountNum": 5001,
+    "userId": "Reggie",
+    "accountType": "Savings",
+    "accountNum": 1000,
+    "fromAccountNum": 2000,
     "action": "Transfer",
     "amount": 500,
-    "createdAt": "2022-06-10T20:39:12.045Z",
-    "updatedAt": "2022-06-10T20:39:12.045Z",
-    "objectId": "ViiJFSZjpk",
+    "createdAt": "2022-06-28T17:47:03.924Z",
+    "updatedAt": "2022-06-28T17:47:03.924Z",
+    "objectId": "dSqXCWx9ZX",
     "__type": "Object",
     "className": "BankAccount"
   },
@@ -128,13 +132,15 @@ and Withdrawal
 verbose: RESPONSE from [POST] /parse/classes/BankAccount: {
   "status": 201,
   "response": {
-    "accountNum": 5001,
+    "userId": "Reggie",
+    "accountNum": 2000,
+    "accountType": "Checking",
     "action": "Transfer",
-    "toAccountNum": 1234,
-    "createdAt": "2022-06-10T20:39:11.902Z",
+    "toAccountNum": 1000,
+    "createdAt": "2022-06-28T17:47:01.743Z",
     "amount": -500,
-    "updatedAt": "2022-06-10T20:39:11.902Z",
-    "objectId": "aQvENmtSvD",
+    "updatedAt": "2022-06-28T17:47:01.743Z",
+    "objectId": "phrJAia1H5",
     "__type": "Object",
     "className": "BankAccount"
   },
