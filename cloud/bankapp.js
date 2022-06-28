@@ -4,6 +4,7 @@ isInitialized = false;
 Parse.Cloud.beforeSave("BankAccount", async request => {
 
     const userid = request.object.get("userId");
+    const accountType = request.object.get("accountType");
     const action = request.object.get("action");
     const amount = request.object.get("amount");
     const accountNum = request.object.get("accountNum");
@@ -12,10 +13,16 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     const fromAccountNum = request.object.get("fromAccountNum")
     const balance = await Parse.Cloud.run("balance",{ "accountNum": accountNum });
     const existingUserId = await Parse.Cloud.run("getuserforaccountnum", { "accountNum": accountNum });
+    const existingAccountType = await Parse.Cloud.run("getaccounttypeforaccountnum", { "accountNum": accountNum });
 
     // Verify account number isn't already used for a different user
     if (existingUserId.length != 0 && userid !== existingUserId) {
       throw "Account Number error: " + accountNum + " associated with a different user";
+    }
+
+    // Verify AccountType matches if already exists for acct number
+    if (existingAccountType.length != 0 && accountType !== existingAccountType) {
+      throw "Account Number error: " + accountNum + " associated with account type " + existingAccountType;
     }
 
     // Verify current balance > withdrawal amount
@@ -68,6 +75,13 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
           },
           error: 'accountNum must be greater than 0'          
         },
+        accountType : {
+          required:true,
+          options: accountType => {
+            return accountType === "Savings" || accountType === "Checking";
+          },
+          error: 'accountType must be either Savings or Checking'
+        },        
         action : {
           required:true,
           options: action => {
@@ -171,6 +185,17 @@ Parse.Cloud.define('getuserforaccountnum', async req => {
       return "";
     });
 
+  Parse.Cloud.define('getaccounttypeforaccountnum', async req => {
+
+      const query = new Parse.Query("BankAccount");
+      query.equalTo("accountNum", req.params.accountNum);
+      const results = await query.first({ useMasterKey: true });
+      if (typeof results !== 'undefined') {
+        return results.get("accountType");
+      }
+      return "";
+    });    
+
 Parse.Cloud.afterSave("BankAccount", async (request) => {
 
         const action = request.object.get("action");
@@ -256,7 +281,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
     
         const user = "user";
         const password = "password";
-        const connectString = "db";
+        const connectString = "database";
         console.log(statement);
 
         let connection;
@@ -285,7 +310,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
     
         const user = "user";
         const password = "password";
-        const connectString = "db";
+        const connectString = "database";
 
           let connection;
           try {
@@ -318,7 +343,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
       
           const user = "user";
           const password = "password";
-          const connectString = "db";
+          const connectString = "database";
 
             let connection;
             try {

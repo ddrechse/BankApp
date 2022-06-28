@@ -46,9 +46,11 @@ A big *thank you* 🙏 to our [sponsors](#sponsors) and [backers](#backers) who 
 $ curl -X POST \
  -H "X-Parse-Application-Id: APPLICATION_ID" \
  -H "Content-Type: application/json" \
- -d '{"userId":"user1", "accountNum":5000, "action":"Deposit","amount":500}' \
+ -d '{"userId":"user1", "accountType":"Savings", "accountNum":5000, "action":"Deposit","amount":500}' \
  http://localhost:1337/parse/classes/BankAccount
 ```
+
+There are 2 vaid accountTypes, Savings and Checking
 You should get a response similar to this:
 
 ```js
@@ -63,9 +65,11 @@ You should get a response similar to this:
 $ curl -X POST \
 -H "X-Parse-Application-Id: APPLICATION_ID" \
 -H "Content-Type: application/json" \
--d '{"userId":"user1", "accountNum":5000, "action":"Withdrawal","amount":500}' \
+-d '{"userId":"user1", "accountType":"Savings", "accountNum":5000, "action":"Withdrawal","amount":500}' \
 http://localhost:1337/parse/classes/BankAccount
 ```
+
+There are 2 vaid accountTypes, Savings and Checking
 You should get a response similar to this:
 
 ```js
@@ -267,6 +271,24 @@ You should get a response similar to this:
 ```
 
 
+* ## Get Account Type  for Account Number
+
+```bash
+curl -X POST \
+-H "X-Parse-Application-Id: APPLICATION_ID"  \
+-H "Content-Type: application/json" \
+-d '{ "accountNum": 2000 }' \
+http://localhost:1337/parse/functions/getaccounttypeforaccountnum
+```
+
+The result is a string or empty string for no user associated with account.
+You should get a response similar to this:
+
+```js
+{
+"result":"Checking"
+}
+```
 
 ---
 - [Getting Started](#getting-started)
