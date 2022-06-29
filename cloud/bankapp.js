@@ -15,6 +15,7 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     const existingUserId = await Parse.Cloud.run("getuserforaccountnum", { "accountNum": accountNum });
     const existingAccountType = await Parse.Cloud.run("getaccounttypeforaccountnum", { "accountNum": accountNum });
 
+
     // Verify account number isn't already used for a different user
     if (existingUserId.length != 0 && userid !== existingUserId) {
       throw "Account Number error: " + accountNum + " associated with a different user";
@@ -52,8 +53,11 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
     }
 
     // Verify current balance > transfer amount
-    if (action === "Transfer" && amount > balance ) {
-        throw "Transfer Amount is greater than current balance of " + balance;
+    // fromAccountNum is valued in AfterSave and indicates a Transfer Deposit so gate the check
+    if(typeof fromAccountNum === 'undefined') {
+      if (action === "Transfer" && amount > balance) {
+          throw "Transfer Amount is greater than current balance of " + balance;
+      }
     }
     // Make Withdrawals negative, Balance is just summed
     if (action === "Withdrawal" || action === "Transfer" && typeof fromAccountNum === 'undefined') {
@@ -198,7 +202,6 @@ Parse.Cloud.define('getuserforaccountnum', async req => {
 
 Parse.Cloud.afterSave("BankAccount", async (request) => {
 
-//        const txid = 
         const userid = request.object.get("userId");     
         const action = request.object.get("action");
         const toAccountNum = request.object.get("toAccountNum");
@@ -283,9 +286,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
 
     async function runSQL(statement) {
     
-        const user = "admin";
-        const password = "kX430jxof7QF";
-        const connectString = "parsemongo_high";
+        const user = "user";
+        const password = "password";
+        const connectString = "database";
         console.log(statement);
 
         let connection;
@@ -312,9 +315,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
 
       async function enquemsg(message_content) {  
     
-        const user = "admin";
-        const password = "kX430jxof7QF";
-        const connectString = "parsemongo_high";
+        const user = "user";
+        const password = "password";
+        const connectString = "database";
 
           let connection;
           try {
@@ -345,9 +348,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
 
         async function dequemsg() {  
       
-          const user = "admin";
-          const password = "kX430jxof7QF";
-          const connectString = "parsemongo_high";
+          const user = "user";
+          const password = "password";
+          const connectString = "database";
 
             let connection;
             try {
