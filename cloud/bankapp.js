@@ -17,8 +17,11 @@ Parse.Cloud.beforeSave("BankAccount", async request => {
 
 
     // Verify account number isn't already used for a different user
-    if (existingUserId.length != 0 && userid !== existingUserId) {
-      throw "Account Number error: " + accountNum + " associated with a different user";
+    // fromAccountNum is valued in AfterSave and indicates a Transfer Deposit so gate the check
+    if(typeof fromAccountNum === 'undefined') {
+      if (existingUserId.length != 0 && userid !== existingUserId) {
+        throw "Account Number error: " + accountNum + " associated with a different user";
+      }
     }
 
     // Verify AccountType matches if already exists for acct number
@@ -201,8 +204,7 @@ Parse.Cloud.define('getuserforaccountnum', async req => {
     });    
 
 Parse.Cloud.afterSave("BankAccount", async (request) => {
-
-        const userid = request.object.get("userId");     
+    
         const action = request.object.get("action");
         const toAccountNum = request.object.get("toAccountNum");
         const externalAccountNum = request.object.get("externalAccountNum");
@@ -218,8 +220,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
             const bankaccount = new BankAccount();
 
             const toAccountType = await Parse.Cloud.run("getaccounttypeforaccountnum", { "accountNum": toAccountNum });
+            const toUserId = await Parse.Cloud.run("getuserforaccountnum", { "accountNum": toAccountNum });
 
-            bankaccount.set("userId", userid);
+            bankaccount.set("userId", toUserId);
             bankaccount.set("accountType", toAccountType);
             bankaccount.set("accountNum", toAccountNum);
             const fromAccountNum = request.object.get("accountNum");
@@ -245,7 +248,6 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
 
     async function initialize() {
       const tnsnames = "/wallet"
-
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       if(isInitialized === false) {
           oracledb.initOracleClient({configDir: tnsnames});
@@ -253,6 +255,7 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
           declare
               already_exists number;
               subscriber     sys.aq$_agent;
+              subscriber1    sys.aq$_agent;
           begin 
               select count(*)
               into already_exists
@@ -266,6 +269,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
                   --- Create the subscriber agent
                   subscriber := sys.aq$_agent('BankA_subscriber', NULL, NULL);
                   DBMS_AQADM.ADD_SUBSCRIBER(queue_name => 'publish',   subscriber => subscriber);
+                  subscriber1 := sys.aq$_agent(NULL, 'admin.reggiebank@reggiebank', NULL);
+                  DBMS_AQADM.ADD_SUBSCRIBER(queue_name => 'publish',   subscriber => subscriber1, queue_to_queue => true);
+                  DBMS_AQADM.SCHEDULE_PROPAGATION(queue_name => 'publish', destination => 'reggiebank', destination_queue => 'reggiebank');
               end if;
           end;`)
           isInitialized = true;
