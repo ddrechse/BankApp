@@ -208,10 +208,11 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
         const action = request.object.get("action");
         const toAccountNum = request.object.get("toAccountNum");
         const externalAccountNum = request.object.get("externalAccountNum");
+        const fromAccountNum = request.object.get("accountNum");
 
         if (action === "Transfer" && typeof externalAccountNum !== 'undefined') {
             amount =  request.object.get("amount");
-            let message_content = "{\"accountNum\":"+externalAccountNum+ ", \"action\":\"Deposit\", \"amount\":"+amount*-1+"}";
+            let message_content = "{\"accountNum\":"+externalAccountNum+ ", \"fromAccountNum\":" + fromAccountNum + ", \"action\":\"Transfer\", \"amount\":"+amount*-1+"}";
             result = await publish(message_content);
         }
 
@@ -225,7 +226,6 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
             bankaccount.set("userId", toUserId);
             bankaccount.set("accountType", toAccountType);
             bankaccount.set("accountNum", toAccountNum);
-            const fromAccountNum = request.object.get("accountNum");
             bankaccount.set("fromAccountNum", fromAccountNum);
             bankaccount.set("action", "Transfer");
             const amount = request.object.get("amount");
@@ -373,6 +373,9 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
               queue.deqOptions.navigation = oracledb.AQ_DEQ_NAV_FIRST_MSG;
               const msg = await queue.deqOne();
               await connection.commit();
+              if( typeof msg === 'undefined') {
+                    return "";
+              }
               return msg.payload.toString();
             } catch (err) {
               console.log(err);
@@ -389,13 +392,43 @@ Parse.Cloud.afterSave("BankAccount", async (request) => {
       
 
 
-      Parse.Cloud.job("checkForTransfers", async (request) =>  {
-        // params: passed in the job call
-        // headers: from the request that triggered the job
-        // log: the ParseServer logger passed in the request
-        // message: a function to update the status message of the job object
-        const { params, headers, log, message } = request;
+          Parse.Cloud.job("checkForTransfers", async (request) =>  {
+            // params: passed in the job call
+            // headers: from the request that triggered the job
+            // log: the ParseServer logger passed in the request
+            // message: a function to update the status message of the job object
+            const { params, headers, log, message } = request;
+    
+            result = await checkTransfersQueue();
 
-        result = await checkTransfersQueue();
-        console.log(result)
-      });
+            const obj = JSON.parse(result);
+
+            const BankAccount = Parse.Object.extend("BankAccount");
+            const bankaccount = new BankAccount();
+
+            const userId = await Parse.Cloud.run("getuserforaccountnum", { "accountNum": obj.accountNum });
+            if (userId === "") {
+              console.log("Account Number " + obj.accountNum + " does not exist");
+              return;
+            }
+            const accountType = await Parse.Cloud.run("getaccounttypeforaccountnum", { "accountNum": obj.accountNum });
+    
+            bankaccount.set("userId", userId);
+            bankaccount.set("accountType", accountType);
+            bankaccount.set("accountNum", obj.accountNum);
+            bankaccount.set("fromAccountNum", obj.fromAccountNum);
+            bankaccount.set("action", obj.action);
+            bankaccount.set("amount", obj.amount);
+    
+            await bankaccount.save()
+            .then((bankaccount) => {
+              // Execute any logic that should take place after the object is saved.
+              console.log('New object created with objectId: ' + bankaccount.id);
+            }, (error) => {
+              // Execute any logic that should take place if the save fails.
+              // error is a Parse.Error with an error code and message.
+              console.log('Failed to process Transfer, with error code: ' + error.message);
+            });
+
+          });
+
