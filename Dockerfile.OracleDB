@@ -44,10 +44,13 @@ RUN npm ci --production --ignore-scripts
 COPY bin bin
 COPY public_html public_html
 COPY views views  
+# Copy Database Credentials
+# https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-download-wallet.html
+COPY wallet /wallet
 # Copy Files for Oracle Client
-#COPY wallet /wallet
-#COPY instantclient_19_15 /opt/oracle/instantclient_19_15
-#ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_15
+# https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
+COPY instantclient_19_15 /opt/oracle/instantclient_19_15
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_15
 
 # Where the server side cloud functions are kept
 COPY cloud cloud
