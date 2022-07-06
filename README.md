@@ -40,6 +40,57 @@ A big *thank you* 🙏 to our [sponsors](#sponsors) and [backers](#backers) who 
 [![Bronze Sponsors](https://opencollective.com/parse-server/tiers/bronze-sponsor.svg?avatarHeight=36&button=false)](https://opencollective.com/parse-server/contribute/bronze-sponsor-10559)
 
 ---
+
+# Building BankApp
+
+1.  Copy wallet files
+
+  ```cp -R /user/mydownlaods/wallet wallet```   
+ https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-download-wallet.html
+
+  2. Copy Oracle Client files
+
+  ```cp -R /usr/mydownloads/instantclient_19_15 instantclient_19_15```
+  https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
+
+
+3. Update Dockerfile.OracleDB
+
+Set Wallet and OracleClient directories if differnet form above
+
+```
+# Copy Database Credentials
+# https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/connect-download-wallet.html
+COPY wallet /wallet
+# Copy Files for Oracle Client
+# https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
+```
+
+Update PARSE_SERVER_APPLICATION_ID and PARSE_SERVER_MASTER_KEY to something unique
+
+```
+ENV PARSE_SERVER_APPLICATION_ID=APPLICATION_ID
+ENV PARSE_SERVER_MASTER_KEY=MASTER_KEY
+```
+
+4. Build the image
+
+```
+docker build --tag myimage  --file Dockerfile.OracleDB .
+```
+
+5.  Run It
+
+```
+docker run --rm  -v config-vol:/parse-server/config  -p 1337:1337  -e "PARSE_SERVER_DATABASE_URI=mongodb://user:password@D4VVQTGHTA12FYY-PARSEMONGO.adb.us-ashburn-1.oraclecloudapps.com:27017/user?authMechanism=PLAIN&authSource=\$external&ssl=true&retryWrites=false&loadBalanced=true" -d myimage:latest | xargs docker logs -f
+```
+
+PARSE_SEREVR_DATABASE_URI is the mongodb api connection string created for JSON databases
+https://blogs.oracle.com/database/post/mongodb-api
+
+---
+
+
 # BankApp API
   * ## Deposit
   ```bash
