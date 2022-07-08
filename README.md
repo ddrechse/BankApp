@@ -94,8 +94,11 @@ Need to update credentials in runSQL, enquemsg and dequemsg
 ```
 
 For AQ creation, the defaults are 
+```
   queuetable = publish_queuetable
   queue      = publish
+```
+
 Update these values to something more relative, i.e. abcbank_queuetable and abcbank
 
 The AQ is used for external transfers between banks
