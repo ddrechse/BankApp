@@ -123,15 +123,16 @@ https://blogs.oracle.com/database/post/mongodb-api
 External transfer is supported using AQ functionality in the Database.
 In the CloudBank example, the external transfer is initiated on the local db that enques the msg to it's local queue and that message then gets propagated to the remote Q using a DBLink.  This is about configuring that link between the local bank and the remote bank.
 
-1. Configure credentials so the the local bank can enque the msg to the remote bank
+Configure credentials so the the local bank can enque the msg to the remote bank
 
 Download the remote banks wallet and upload cwallet.sso into an OCI bucket for local bank use
 
 Look at Create the Database Link in link below, it has pictures and better descibes the process
 https://redstack.wordpress.com/2022/05/24/cross-region-event-propagation-with-oracle-transactional-event-queues/
 
-Create the DBLink using the SQL Databse Action Window
+Create the DBLink using the SQL Database Action Window
 Run the following PL/SQL updated for your configuration.
+
 First create the directory
 ```
 create or replace directory AQ_DBLINK_CREDENTIALS
